@@ -249,7 +249,7 @@ export default function InsightsPage() {
   async function fetchInsights(d: number) {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/insights?user_id=${USER_ID}&days=${d}`);
+      const res = await fetch(`https://pocketpal-production-d2ae.up.railway.app/insights?user_id=${USER_ID}&days=${d}`);
       setData(await res.json());
     } catch {}
     finally { setLoading(false); }

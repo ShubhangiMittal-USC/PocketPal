@@ -27,8 +27,8 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   try {
     const dateStr = formatTodayISO();
     const [planRes, statusRes] = await Promise.all([
-      fetch(`http://localhost:8000/plan?user_id=${USER_ID}&date_str=${dateStr}`),
-      fetch(`http://localhost:8000/plan/status?user_id=${USER_ID}&date_str=${dateStr}`),
+      fetch(`https://pocketpal-production-d2ae.up.railway.app/plan?user_id=${USER_ID}&date_str=${dateStr}`),
+      fetch(`https://pocketpal-production-d2ae.up.railway.app/plan/status?user_id=${USER_ID}&date_str=${dateStr}`),
     ]);
     const planData   = await planRes.json();
     const statusData = await statusRes.json();

@@ -40,7 +40,7 @@ export default function MealsPage() {
 
   async function fetchSaved() {
     try {
-      const res  = await fetch(`http://localhost:8000/meals/saved?user_id=${USER_ID}`);
+      const res  = await fetch(`https://pocketpal-production-d2ae.up.railway.app/meals/saved?user_id=${USER_ID}`);
       const data = await res.json();
       setSavedMeals(data.meals ?? []);
     } catch {}
@@ -55,7 +55,7 @@ export default function MealsPage() {
     setSuggestions([]);
     setTab("suggest");
     try {
-      const res  = await fetch("http://localhost:8000/meals/suggest", {
+      const res  = await fetch("https://pocketpal-production-d2ae.up.railway.app/meals/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: USER_ID, ingredients: ingr }),
@@ -69,7 +69,7 @@ export default function MealsPage() {
   async function saveMeal(meal: Meal) {
     setSaveLoading(meal.name);
     try {
-      await fetch("http://localhost:8000/meals/save", {
+      await fetch("https://pocketpal-production-d2ae.up.railway.app/meals/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: USER_ID, ...meal }),
@@ -82,7 +82,7 @@ export default function MealsPage() {
 
   async function deleteMeal(name: string) {
     try {
-      await fetch("http://localhost:8000/meals/delete", {
+      await fetch("https://pocketpal-production-d2ae.up.railway.app/meals/delete", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: USER_ID, name }),
