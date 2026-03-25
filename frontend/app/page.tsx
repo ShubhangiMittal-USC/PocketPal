@@ -83,7 +83,7 @@ export default function Home() {
     setLoading(true);
     const messageWithDate = `[Today's date is ${formatTodayISO()}] ${text}`;
     try {
-      const res = await fetch("https://pocketpal-production-d2ae.up.railway.app/chat", {
+      const res = await fetch("https://pocketpal-production-6074.up.railway.app/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: USER_ID, message: messageWithDate, trace: false, llm: LLM }),

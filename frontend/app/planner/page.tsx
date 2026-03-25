@@ -92,7 +92,7 @@ export default function PlannerPage() {
 
   async function fetchStatus() {
     try {
-      const res  = await fetch(`https://pocketpal-production-d2ae.up.railway.app/plan/status?user_id=${USER_ID}&date_str=${dateStr}`);
+      const res  = await fetch(`https://pocketpal-production-6074.up.railway.app/plan/status?user_id=${USER_ID}&date_str=${dateStr}`);
       const data = await res.json();
       const parsed: StatusMap = {};
       for (const k of Object.keys(data.status ?? {})) {
@@ -108,7 +108,7 @@ export default function PlannerPage() {
   async function fetchPlan() {
     setLoading(true);
     try {
-      const res  = await fetch(`https://pocketpal-production-d2ae.up.railway.app/plan?user_id=${USER_ID}&date_str=${dateStr}`);
+      const res  = await fetch(`https://pocketpal-production-6074.up.railway.app/plan?user_id=${USER_ID}&date_str=${dateStr}`);
       const data = await res.json();
       setPlan(data.plan ? { date: data.plan.date, blocks: data.plan.blocks } : null);
       await fetchStatus();
@@ -118,7 +118,7 @@ export default function PlannerPage() {
   useEffect(() => { fetchPlan(); }, []);
 
   async function saveStatus(blockIndex: number, full: BlockStatus) {
-    await fetch("https://pocketpal-production-d2ae.up.railway.app/plan/status", {
+    await fetch("https://pocketpal-production-6074.up.railway.app/plan/status", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: USER_ID, date_str: dateStr, block_index: blockIndex, ...full }),
@@ -148,7 +148,7 @@ export default function PlannerPage() {
   }
 
   async function saveFullPlan(blocks: PlanBlock[]) {
-    await fetch("https://pocketpal-production-d2ae.up.railway.app/chat", {
+    await fetch("https://pocketpal-production-6074.up.railway.app/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
