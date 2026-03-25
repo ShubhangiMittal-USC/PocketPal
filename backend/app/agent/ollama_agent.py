@@ -63,11 +63,12 @@ Rules:
 10. Never print raw JSON. Use tools.
 11. CRITICAL — create_plan rules:
     a. ONLY include blocks the user EXPLICITLY mentioned. NEVER add, split, rename, or invent blocks.
-    b. If user says "10am class, 12pm lunch, 3pm gym" → exactly 3 blocks. No "lunch break", no "gym time", no gap fillers.
+    b. If user says "10am class, 12pm gym, 5pm dance" → exactly 3 blocks. No "free time", no "break", no gap fillers.
     c. Use the user's EXACT wording for titles (e.g. "class" not "class session").
     d. Call create_plan exactly ONCE with ALL blocks in a single call.
     e. NEVER duplicate blocks.
-12. NEVER output raw JSON, function calls, or tool syntax in your reply text. Only respond in plain natural language. Never call it multiple times for the same request.
+    f. If user only gives a start time with no end time, set end time to exactly 1 hour after start. Example: "10am class" → start "10:00", end "11:00". NEVER invent other durations like 1:50 or 2:00.
+12. NEVER output raw JSON, function calls, or tool syntax in your reply text. Only respond in plain natural language.
 """
 
 # ---------------------------------------------------------------------------
