@@ -33,12 +33,7 @@ app = FastAPI(title="PocketPal API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://pocketpalfrontend.vercel.app",
-        "https://frontend-chi-five-tourhxrkfk.vercel.app",
-        "https://frontend-amfihqwns-mittals-9242s-projects.vercel.app",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
