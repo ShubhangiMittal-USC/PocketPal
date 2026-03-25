@@ -61,6 +61,13 @@ Rules:
 8. For insights/summaries: use the get_insights tool to fetch real data.
 9. Keep replies under 3 sentences unless showing a list or plan.
 10. Never print raw JSON. Use tools.
+11. CRITICAL — create_plan rules:
+    a. ONLY include blocks the user EXPLICITLY mentioned. NEVER add, split, rename, or invent blocks.
+    b. If user says "10am class, 12pm lunch, 3pm gym" → exactly 3 blocks. No "lunch break", no "gym time", no gap fillers.
+    c. Use the user's EXACT wording for titles (e.g. "class" not "class session").
+    d. Call create_plan exactly ONCE with ALL blocks in a single call.
+    e. NEVER duplicate blocks.
+12. NEVER output raw JSON, function calls, or tool syntax in your reply text. Only respond in plain natural language. Never call it multiple times for the same request.
 """
 
 # ---------------------------------------------------------------------------
@@ -370,7 +377,7 @@ def run_ollama_agent(db: Session, user_id: str, message: str, trace: bool = Fals
 
     # ── Pure conversational reply — no tool needed ───────────────────────────
     if not tc_raw:
-        reply = msg1.get("content") or "I'm here! 🐾"
+        reply = _clean_reply(msg1.get("content") or "I'm here! 🐾")
         # Save assistant reply to history
         history.append({"role": "assistant", "content": reply})
         return _build_response(
@@ -411,11 +418,8 @@ def run_ollama_agent(db: Session, user_id: str, message: str, trace: bool = Fals
     data2 = _groq_call(messages, use_tools=False)
     reply = data2["choices"][0]["message"].get("content") or "Done! 🐾"
 
-    # Strip leaked tool-call artifacts like (create_plan>{...})
-    import re as _re
-    reply = _re.sub(r"\(\w+>[^\)]*\)\s*", "", reply).strip()
-    if not reply:
-        reply = "Done! 🐾"
+    # Strip ANY leaked tool-call / JSON artifacts from the reply
+    reply = _clean_reply(reply)
 
     # Save the final assistant reply to persistent history
     history.append({"role": "assistant", "content": reply})
@@ -431,6 +435,25 @@ def run_ollama_agent(db: Session, user_id: str, message: str, trace: bool = Fals
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+import re as _re
+
+def _clean_reply(text: str) -> str:
+    """Remove any leaked tool-call artifacts / raw JSON from LLM reply."""
+    # Remove <function=...>...</function> tags and their contents
+    text = _re.sub(r"<function=[^>]*>.*?</function>", "", text, flags=_re.DOTALL)
+    # Remove function=name>{...} (no angle brackets)
+    text = _re.sub(r"function=\w+>\s*\{.*?\}", "", text, flags=_re.DOTALL)
+    # Remove (tool_name>{...})
+    text = _re.sub(r"\(\w+>\s*\{.*?\}\)", "", text, flags=_re.DOTALL)
+    # Remove any remaining standalone JSON objects with "blocks", "date", "top3" keys
+    text = _re.sub(r"\{[^{}]*\"(?:blocks|top3|date)\"[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", "", text, flags=_re.DOTALL)
+    # Remove leftover </function> or <function> tags
+    text = _re.sub(r"</?function[^>]*>", "", text)
+    # Clean up excess whitespace
+    text = _re.sub(r"\n{3,}", "\n\n", text).strip()
+    return text or "Done! 🐾"
+
 
 def _build_response(*, reply, intent, tool_calls, memory_updates, db, user_id, trace):
     debug = {"memory": crud.get_memories(db, user_id)} if trace else None
