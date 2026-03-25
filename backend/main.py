@@ -36,6 +36,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://pocketpalfrontend.vercel.app",
+        "https://frontend-chi-five-tourhxrkfk.vercel.app",
+        "https://frontend-amfihqwns-mittals-9242s-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
