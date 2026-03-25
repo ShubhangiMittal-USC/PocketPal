@@ -375,10 +375,27 @@ def run_ollama_agent(db: Session, user_id: str, message: str, trace: bool = Fals
     tool_calls     = []
     memory_updates = []
 
-    # ── Pure conversational reply — no tool needed ───────────────────────────
+    # ── Check if LLM put tool calls in content instead of tool_calls field ──
     if not tc_raw:
-        reply = _clean_reply(msg1.get("content") or "I'm here! 🐾")
-        # Save assistant reply to history
+        content = msg1.get("content") or ""
+        inline_result = _parse_inline_tool_call(content)
+        if inline_result:
+            # Execute the tool call the LLM embedded in text
+            name, args = inline_result
+            result = _execute_tool(db, user_id, name, args)
+            tool_calls_out = [{"tool": name, "args": args}]
+            reply = _make_tool_summary(name, args)
+            history.append({"role": "assistant", "content": reply})
+            return _build_response(
+                reply=reply,
+                intent="groq_tool_call",
+                tool_calls=tool_calls_out,
+                memory_updates=[],
+                db=db, user_id=user_id, trace=trace,
+            )
+
+        # Pure conversational reply — no tool needed
+        reply = _clean_reply(content or "I'm here! 🐾")
         history.append({"role": "assistant", "content": reply})
         return _build_response(
             reply=reply,
@@ -437,6 +454,55 @@ def run_ollama_agent(db: Session, user_id: str, message: str, trace: bool = Fals
 # ---------------------------------------------------------------------------
 
 import re as _re
+
+
+def _parse_inline_tool_call(text: str):
+    """Detect when the LLM embeds a tool call in content text instead of using tool_calls.
+    Returns (tool_name, args_dict) or None."""
+    # Match: function=tool_name>{JSON}</function>  or  (tool_name>{JSON})
+    m = _re.search(r"function=(\w+)>\s*(\{.*\})\s*</function>", text, _re.DOTALL)
+    if not m:
+        m = _re.search(r"\((\w+)>\s*(\{.*\})\s*\)", text, _re.DOTALL)
+    if not m:
+        return None
+    name = m.group(1)
+    try:
+        args = json.loads(m.group(2))
+    except Exception:
+        return None
+    return name, args
+
+
+def _make_tool_summary(tool_name: str, args: dict) -> str:
+    """Generate a clean user-facing summary for a tool call."""
+    if tool_name == "create_plan":
+        blocks = args.get("blocks", [])
+        if not blocks:
+            return "Your plan has been created! 🐾"
+        lines = []
+        for b in blocks:
+            start = b.get("start", "")
+            end = b.get("end", "")
+            title = b.get("title", "")
+            # Convert 24h to display
+            def fmt(t):
+                parts = t.split(":")
+                if len(parts) != 2:
+                    return t
+                h, m = int(parts[0]), parts[1]
+                ampm = "AM" if h < 12 else "PM"
+                h12 = h % 12 or 12
+                return f"{h12}:{m} {ampm}"
+            lines.append(f"  - {fmt(start)} to {fmt(end)}: {title}")
+        return "Your plan is set! 🐾\n" + "\n".join(lines)
+    if tool_name == "log_habit":
+        habit = args.get("habit", "")
+        value = args.get("value", "")
+        return f"Logged {value} {habit.replace('_', ' ')}! 💪"
+    if tool_name == "save_preference":
+        return f"Saved your preference: {args.get('key', '')} = {args.get('value', '')} ✨"
+    return "Done! 🐾"
+
 
 def _clean_reply(text: str) -> str:
     """Remove any leaked tool-call artifacts / raw JSON from LLM reply."""
