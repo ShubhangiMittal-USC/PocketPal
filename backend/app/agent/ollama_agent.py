@@ -411,6 +411,12 @@ def run_ollama_agent(db: Session, user_id: str, message: str, trace: bool = Fals
     data2 = _groq_call(messages, use_tools=False)
     reply = data2["choices"][0]["message"].get("content") or "Done! 🐾"
 
+    # Strip leaked tool-call artifacts like (create_plan>{...})
+    import re as _re
+    reply = _re.sub(r"\(\w+>[^\)]*\)\s*", "", reply).strip()
+    if not reply:
+        reply = "Done! 🐾"
+
     # Save the final assistant reply to persistent history
     history.append({"role": "assistant", "content": reply})
 
